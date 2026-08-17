@@ -35,7 +35,14 @@
       justify-content: center;
       min-height: 100vh;
       user-select: none;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    @media (max-height: 600px) {
+      body {
+        align-items: flex-start;
+      }
     }
 
     /* CRT scanlines */
@@ -401,7 +408,12 @@ function shuffle(a) {
 
 function pick(arr, n) { return shuffle(arr).slice(0, n); }
 
+let pendingResultTimer = null;
+
 function init() {
+  clearTimeout(pendingResultTimer);
+  pendingResultTimer = null;
+
   const nums  = pick([1,2,3,4,5,6,7,8], 3);
   const chars = pick(SYM_CHARS, 3);
   const mults = pick(MULT_POOL, 3);
@@ -452,7 +464,8 @@ function confirm() {
   if (newSum > target) {
     G.state = 'lose';
     draw();
-    setTimeout(() => {
+    clearTimeout(pendingResultTimer);
+    pendingResultTimer = setTimeout(() => {
       document.getElementById('fail-reason').textContent = 'ターゲット超過';
       document.getElementById('fail-detail').textContent =
         `${newSum} > ${target} (+${newSum - target})`;
@@ -470,8 +483,10 @@ function confirm() {
   if (G.pairs.length === 3) {
     G.state = newSum === target ? 'win' : 'lose';
     draw();
-    setTimeout(() => {
-      if (G.state === 'win') {
+    const finishedState = G.state;
+    clearTimeout(pendingResultTimer);
+    pendingResultTimer = setTimeout(() => {
+      if (finishedState === 'win') {
         document.getElementById('ov-win').classList.add('show');
       } else {
         document.getElementById('fail-reason').textContent = '合計が不一致';
